@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "392477545876",
+    "firebase_url": "https://mal-eum.firebaseio.com",
+    "project_id": "mal-eum",
+    "storage_bucket": "mal-eum.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392477545876:android:270144f348c395ec",
+        "android_client_info": {
+          "package_name": "kr.huah.maleum"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "392477545876-jerdbf893pobm1ood309d77rbcftrj9s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvuS2aRTlSjSdG7CDkpzuptXZ5_2fmblw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

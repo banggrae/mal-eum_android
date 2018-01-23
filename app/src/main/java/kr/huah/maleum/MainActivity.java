@@ -1,64 +1,73 @@
 package kr.huah.maleum;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
+import android.text.TextUtils;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
-    WebView myWebView;
+public class MainActivity extends Activity {
+
+    private WebView myWebView;
+    private TextView mTextMessage;
+    private boolean mSigned;
+    private String mDeviceId;
+    BottomNavigationView mNavigation;
+
+    // private String mDomain = "https://www.mal-eum.com/";
+    // private String mDomain = "http://10.10.131.24:8090/";
+    // private String mDomain = "http://192.168.0.8:8090/";
+    // private String mDomain = "http://192.168.0.2:8090/";
+    private String mDomain = "http://10.10.121.53:8090/";
+    Map<String, String> mHeaders = new HashMap<String, String>();
+
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.navigation_home:
+                    myWebView.loadUrl(mDomain, mHeaders);
+                    return true;
+                case R.id.navigation_dashboard:
+                    myWebView.loadUrl(mDomain + "qna", mHeaders);
+                    return true;
+                case R.id.navigation_notifications:
+                    myWebView.loadUrl(mDomain + "settings", mHeaders);
+                    return true;
+            }
+            return false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
         myWebView = (WebView) findViewById(R.id.webview);
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -76,158 +85,176 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(activity, "Oh no! " + description, Toast.LENGTH_SHORT).show();
             }
         });
+        mHeaders.put("from", "app");
+        myWebView.loadUrl(mDomain + "auth", mHeaders);
+        myWebView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
-        myWebView.loadUrl("http://192.168.219.104:8080/"); // office
-        // myWebView.loadUrl("http://192.168.0.2:8080/"); // home
-        // myWebView.loadUrl("http://mal-eum.com");
-
-        IntentFilter filter = new IntentFilter("kr.huah.maleum.sms");
-        LocalBroadcastManager.getInstance(this).registerReceiver(mSmsReceiver, filter);
-
-        requestPermission();
+        // mTextMessage = (TextView) findViewById(R.id.message);
+        mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
+        mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        mNavigation.setVisibility(View.GONE);
+        saveDeviceId();
     }
 
-    void requestPermission() {
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECEIVE_SMS)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_CONTACTS)) {
-
-                // Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECEIVE_SMS},
-                        1111);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
+    void saveDeviceId() {
+        if (TextUtils.isEmpty(getDeviceId())) {
+            mDeviceId = Settings.Secure.getString(getContentResolver(),
+                    Settings.Secure.ANDROID_ID);
+            SharedPreferences pf = getPreferences(MODE_PRIVATE);
+            SharedPreferences.Editor editor = pf.edit();
+            editor.putString("deviceId", mDeviceId);
+            editor.apply();
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1111: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
+    String getDeviceId() {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        return pf.getString("deviceId", "");
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mSmsReceiver);
-    }
+    private AlarmManager alarmMgr;
+    private PendingIntent alarmIntent;
 
-    BroadcastReceiver mSmsReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Get the SMS message received
-            final Bundle bundle = intent.getExtras();
-            if (bundle != null) {
-                String number = bundle.getString("number");
-                String message = bundle.getString("message");
-                String contents = "Number : " + number + " Message : " + message;
-                Toast.makeText(MainActivity.this, contents, Toast.LENGTH_LONG).show();
-            }
-        }
-    };
+    void setWeatherAlarm(int time) {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = pf.edit();
+        editor.putInt("alarmTime", time);
+        editor.apply();
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        if (time > 0) {
+            // set alarm
+            alarmMgr = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(this, WeatherAlarmReceiver.class);
+            alarmIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, time);
+
+            alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+                    AlarmManager.INTERVAL_DAY, alarmIntent);
         } else {
-            super.onBackPressed();
+            // cancel alarm
+
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    int getWeatherAlarmTime() {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        return pf.getInt("alarmTime", 0);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    void setAgreeSms(boolean agree) {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = pf.edit();
+        editor.putBoolean("agreeSms", agree);
+        editor.apply();
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
+    boolean agreedSms() {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        return pf.getBoolean("agreeSms", false);
+    }
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+    void setAgreeNotify(boolean agree) {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = pf.edit();
+        editor.putBoolean("agreeNotify", agree);
+        editor.apply();
+    }
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+    boolean agreedNotify() {
+        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        return pf.getBoolean("agreeNotify", false);
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         // Check if the key event was the Back button and if there's history
         if ((keyCode == KeyEvent.KEYCODE_BACK) && myWebView.canGoBack()) {
-            myWebView.goBack();
-            return true;
+            if (mDomain.equals(myWebView.getUrl())) {
+                return super.onKeyDown(keyCode, event);
+            } else {
+                myWebView.loadUrl(mDomain);
+                return true;
+            }
         }
         // If it wasn't the Back key or there's no web page history, bubble up to the default
         // system behavior (probably exit the activity)
         return super.onKeyDown(keyCode, event);
     }
 
+    public void showBottomNavigation(boolean show) {
+        if (show) {
+            mNavigation.post(new Runnable() {
+                @Override
+                public void run() {
+                    mNavigation.setVisibility(View.VISIBLE);
+                }
+            });
+        } else {
+            mNavigation.post(new Runnable() {
+                @Override
+                public void run() {
+                    mNavigation.setVisibility(View.GONE);
+                }
+            });
+        }
+    }
+
+    static class WebAppInterface {
+
+        MainActivity mContext;
+
+        WebAppInterface(MainActivity c) {
+            mContext = c;
+        }
+
+        @JavascriptInterface
+        public String getDeviceId() {
+            return mContext.getDeviceId();
+        }
+
+        @JavascriptInterface
+        public void setSigned(boolean signed) {
+            mContext.mSigned = signed;
+            mContext.showBottomNavigation(signed);
+        }
+
+        @JavascriptInterface
+        public void showToast(String msg) {
+            Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+        }
+
+        @JavascriptInterface
+        public int getWeatherAlarmTime() {
+            return mContext.getWeatherAlarmTime();
+        }
+
+        @JavascriptInterface
+        public boolean agreedSms() {
+            return mContext.agreedSms();
+        }
+
+        @JavascriptInterface
+        public boolean agreedNotify() {
+            return mContext.agreedNotify();
+        }
+
+        @JavascriptInterface
+        public void setAgreeSms(boolean agree) {
+            mContext.setAgreeSms(agree);
+
+        }
+
+        @JavascriptInterface
+        public void setAgreeNotify(boolean agree) {
+            mContext.setAgreeNotify(agree);
+        }
+
+        @JavascriptInterface
+        public void setWeatherAlarm(int time) {
+            mContext.setWeatherAlarm(time);
+        }
+    }
 }
