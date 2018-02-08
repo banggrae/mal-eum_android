@@ -1,18 +1,34 @@
 package kr.huah.maleum;
 
+import java.text.MessageFormat;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessaging;
+
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,10 +40,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends Activity {
 
@@ -42,17 +54,18 @@ public class MainActivity extends Activity {
     // private String mDomain = "http://192.168.0.8:8090/";
     // private String mDomain = "http://192.168.0.2:8090/";
     private String mDomain = "http://10.10.121.53:8090/";
+
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
+                case R.id.navigation_dashboard:
+                    myWebView.loadUrl(mDomain + "mypage", mHeaders);
+                    return true;
                 case R.id.navigation_home:
                     myWebView.loadUrl(mDomain, mHeaders);
-                    return true;
-                case R.id.navigation_dashboard:
-                    myWebView.loadUrl(mDomain + "qna", mHeaders);
                     return true;
                 case R.id.navigation_notifications:
                     myWebView.loadUrl(mDomain + "settings", mHeaders);
@@ -86,7 +99,14 @@ public class MainActivity extends Activity {
             }
         });
         mHeaders.put("from", "app");
-        myWebView.loadUrl(mDomain + "auth", mHeaders);
+
+        String message = getIntent().getStringExtra("message");
+        if (message != null) {
+            Toast.makeText(activity, "Oh no! " + message, Toast.LENGTH_SHORT).show();
+            myWebView.loadUrl(mDomain + "mypage?message=" + message, mHeaders);
+        } else {
+            myWebView.loadUrl(mDomain + "auth", mHeaders);
+        }
         myWebView.addJavascriptInterface(new WebAppInterface(this), WebAppInterface.NAME);
 
         // mTextMessage = (TextView) findViewById(R.id.message);
@@ -94,13 +114,125 @@ public class MainActivity extends Activity {
         mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         mNavigation.setVisibility(View.GONE);
         saveDeviceId();
+
+//        FirebaseMessaging.getInstance().subscribeToTopic("weather");
+     }
+
+    void requestReadMmsPermission() {
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.READ_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.RECEIVE_SMS,
+                    Manifest.permission.RECEIVE_MMS
+            }, 0);
+        }
+
+//        if (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.READ_SMS)
+//                != PackageManager.PERMISSION_GRANTED) {
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    Manifest.permission.READ_SMS)) {
+//
+//                // Show an expanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.READ_SMS},
+//                        1111);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+//        // Here, thisActivity is the current activity
+//        if (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.RECEIVE_MMS)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    Manifest.permission.RECEIVE_MMS)) {
+//
+//                // Show an expanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.RECEIVE_MMS},
+//                        1111);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+//
+//        // Here, thisActivity is the current activity
+//        if (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.RECEIVE_SMS)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    Manifest.permission_group.SMS)) {
+//
+//                // Show an expanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.RECEIVE_SMS},
+//                        1111);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 0: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     void saveDeviceId() {
         if (TextUtils.isEmpty(getDeviceId())) {
-            mDeviceId = Settings.Secure.getString(getContentResolver(),
-                    Settings.Secure.ANDROID_ID);
-            SharedPreferences pf = getPreferences(MODE_PRIVATE);
+            mDeviceId = UUID.randomUUID().toString();
+            SharedPreferences pf = getPreferences();
             SharedPreferences.Editor editor = pf.edit();
             editor.putString("deviceId", mDeviceId);
             editor.apply();
@@ -108,17 +240,31 @@ public class MainActivity extends Activity {
     }
 
     String getDeviceId() {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences pf = getPreferences();
         return pf.getString("deviceId", "");
     }
 
+    String getCmToken() {
+        SharedPreferences pf = getPreferences();
+        String token = pf.getString("messageToken", "");
+        if (TextUtils.isEmpty(token)) {
+            token = FirebaseInstanceId.getInstance().getToken();
+            SharedPreferences.Editor editor = pf.edit();
+            editor.putString("messageToken", token);
+            editor.apply();
+        }
+        Toast.makeText(this, "token : " + token, Toast.LENGTH_SHORT).show();
+
+        return token;
+    }
+
     int getWeatherAlarm() {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences pf = getPreferences();
         return pf.getInt("weatherAlarm", 0);
     }
 
     void setWeatherAlarm(int time) {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences pf = getPreferences();
         SharedPreferences.Editor editor = pf.edit();
         editor.putInt("weatherAlarm", time);
         editor.apply();
@@ -156,24 +302,28 @@ public class MainActivity extends Activity {
     }
 
     void setAgreeSms(boolean agree) {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences pf = getPreferences();
         SharedPreferences.Editor editor = pf.edit();
         editor.putBoolean("agreeSms", agree);
         editor.apply();
         if (agree) {
             Toast.makeText(this, "한전 대금문자 활용 동의하셨습니다.", Toast.LENGTH_SHORT).show();
+            requestReadMmsPermission();
         } else {
             Toast.makeText(this, "한전 대금문자 활용 거부하셨습니다.", Toast.LENGTH_SHORT).show();
         }
     }
 
     boolean agreedSms() {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
-        return pf.getBoolean("agreeSms", false);
+        return Preference.agreedSms(this);
+    }
+
+    SharedPreferences getPreferences() {
+        return getSharedPreferences(getPackageName(), MODE_PRIVATE);
     }
 
     void setAgreeNotify(boolean agree) {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences pf = getPreferences();
         SharedPreferences.Editor editor = pf.edit();
         editor.putBoolean("agreeNotify", agree);
         editor.apply();
@@ -185,7 +335,7 @@ public class MainActivity extends Activity {
     }
 
     boolean agreedNotify() {
-        SharedPreferences pf = getPreferences(MODE_PRIVATE);
+        SharedPreferences pf = getPreferences();
         return pf.getBoolean("agreeNotify", false);
     }
 
@@ -223,6 +373,11 @@ public class MainActivity extends Activity {
         }
     }
 
+    public void setPlants(String id, String name) {
+        // TODO
+
+    }
+
     static class WebAppInterface {
 
         public static final String NAME = "MaleumAppJs";
@@ -235,6 +390,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getDeviceId() {
             return mContext.getDeviceId();
+        }
+
+        @JavascriptInterface
+        public String getCmToken() {
+            return mContext.getCmToken();
         }
 
         @JavascriptInterface
@@ -277,6 +437,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setAgreeNotify(boolean agree) {
             mContext.setAgreeNotify(agree);
+        }
+
+        @JavascriptInterface
+        public void setPlants(String id, String name) {
+            mContext.setPlants(id, name);
         }
     }
 }

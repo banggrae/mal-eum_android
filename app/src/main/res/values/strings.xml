@@ -11,6 +11,6 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="title_activity_sample">Sample</string>
     <string name="title_home">홈</string>
-    <string name="title_dashboard">게시판</string>
-    <string name="title_notifications">알림</string>
+    <string name="title_dashboard">내발전소</string>
+    <string name="title_notifications">알림설정</string>
 </resources>
