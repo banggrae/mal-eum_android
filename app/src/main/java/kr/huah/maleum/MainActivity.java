@@ -101,22 +101,27 @@ public class MainActivity extends Activity {
         mHeaders.put("from", "app");
 
         String message = getIntent().getStringExtra("message");
+        String gcm = getIntent().getStringExtra("gcm");
         if (message != null) {
-            Toast.makeText(activity, "Oh no! " + message, Toast.LENGTH_SHORT).show();
             myWebView.loadUrl(mDomain + "mypage?message=" + message, mHeaders);
+        } else if ("smp".equals(gcm)) {
+            myWebView.loadUrl(mDomain + "smp/trend", mHeaders);
+        } else if ("rec".equals(gcm)) {
+            myWebView.loadUrl(mDomain + "rec/trend", mHeaders);
+        } else if ("main".equals(gcm)) {
+            myWebView.loadUrl(mDomain, mHeaders);
         } else {
             myWebView.loadUrl(mDomain + "auth", mHeaders);
         }
         myWebView.addJavascriptInterface(new WebAppInterface(this), WebAppInterface.NAME);
 
-        // mTextMessage = (TextView) findViewById(R.id.message);
         mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
         mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         mNavigation.setVisibility(View.GONE);
         saveDeviceId();
 
-//        FirebaseMessaging.getInstance().subscribeToTopic("weather");
-     }
+        // FirebaseMessaging.getInstance().subscribeToTopic("sun");
+    }
 
     void requestReadMmsPermission() {
 
@@ -129,84 +134,6 @@ public class MainActivity extends Activity {
                     Manifest.permission.RECEIVE_MMS
             }, 0);
         }
-
-//        if (ContextCompat.checkSelfPermission(this,
-//                Manifest.permission.READ_SMS)
-//                != PackageManager.PERMISSION_GRANTED) {
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-//                    Manifest.permission.READ_SMS)) {
-//
-//                // Show an expanation to the user *asynchronously* -- don't block
-//                // this thread waiting for the user's response! After the user
-//                // sees the explanation, try again to request the permission.
-//
-//            } else {
-//
-//                // No explanation needed, we can request the permission.
-//
-//                ActivityCompat.requestPermissions(this,
-//                        new String[]{Manifest.permission.READ_SMS},
-//                        1111);
-//
-//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-//                // app-defined int constant. The callback method gets the
-//                // result of the request.
-//            }
-//        }
-//        // Here, thisActivity is the current activity
-//        if (ContextCompat.checkSelfPermission(this,
-//                Manifest.permission.RECEIVE_MMS)
-//                != PackageManager.PERMISSION_GRANTED) {
-//
-//
-//            // Should we show an explanation?
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-//                    Manifest.permission.RECEIVE_MMS)) {
-//
-//                // Show an expanation to the user *asynchronously* -- don't block
-//                // this thread waiting for the user's response! After the user
-//                // sees the explanation, try again to request the permission.
-//
-//            } else {
-//
-//                // No explanation needed, we can request the permission.
-//
-//                ActivityCompat.requestPermissions(this,
-//                        new String[]{Manifest.permission.RECEIVE_MMS},
-//                        1111);
-//
-//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-//                // app-defined int constant. The callback method gets the
-//                // result of the request.
-//            }
-//        }
-//
-//        // Here, thisActivity is the current activity
-//        if (ContextCompat.checkSelfPermission(this,
-//                Manifest.permission.RECEIVE_SMS)
-//                != PackageManager.PERMISSION_GRANTED) {
-//
-//            // Should we show an explanation?
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-//                    Manifest.permission_group.SMS)) {
-//
-//                // Show an expanation to the user *asynchronously* -- don't block
-//                // this thread waiting for the user's response! After the user
-//                // sees the explanation, try again to request the permission.
-//
-//            } else {
-//
-//                // No explanation needed, we can request the permission.
-//
-//                ActivityCompat.requestPermissions(this,
-//                        new String[]{Manifest.permission.RECEIVE_SMS},
-//                        1111);
-//
-//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-//                // app-defined int constant. The callback method gets the
-//                // result of the request.
-//            }
-//        }
     }
 
     @Override
@@ -253,8 +180,7 @@ public class MainActivity extends Activity {
             editor.putString("messageToken", token);
             editor.apply();
         }
-        Toast.makeText(this, "token : " + token, Toast.LENGTH_SHORT).show();
-
+        // Toast.makeText(this, "token : " + token, Toast.LENGTH_SHORT).show();
         return token;
     }
 
@@ -277,7 +203,7 @@ public class MainActivity extends Activity {
 
         if (time > 0) {
             // set alarm
-            alarmMgr.cancel(alarmIntent);
+            // alarmMgr.cancel(alarmIntent);
 
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
@@ -401,7 +327,6 @@ public class MainActivity extends Activity {
         public void setSigned(boolean signed) {
             mContext.mSigned = signed;
             mContext.showBottomNavigation(signed);
-            showToast("signed : " + signed);
         }
 
         @JavascriptInterface

@@ -28,7 +28,6 @@ public class CMJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
         Log.d(TAG, "Performing long running task in scheduled job");
-        // TODO(developer): add long running task here.
         parseMMS();
         return false;
     }
@@ -114,7 +113,7 @@ public class CMJobService extends JobService {
 
         String number = parseNumber(id);
         String msg = parseMessage(id);
-        Toast.makeText(this, "mms : " + msg, Toast.LENGTH_LONG).show();
+//        Toast.makeText(this, "mms : " + msg, Toast.LENGTH_LONG).show();
         Log.i("MMSReceiver", "|" + number + "|" + sub
                 + "|" + sub_cs + "|" + msg);
     }
@@ -195,9 +194,9 @@ public class CMJobService extends JobService {
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this, NotificationChannel.DEFAULT_CHANNEL_ID)
-                        .setSmallIcon(R.mipmap.maleum_icon_s)
+                        .setSmallIcon(R.drawable.ic_stat_sun)
                         .setContentTitle("한전 전력대금구입 문자 수신")
-                        .setContentText("지금 발전소 발전량과 수익을 입력하시겠습니까? 여기를 꾹 눌러 주세요.");
+                        .setContentText("지금 발전량과 수익을 입력하시겠습니까? 여기를 꾹 눌러 주세요.");
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, MainActivity.class);
         resultIntent.putExtra("message", message);
@@ -216,6 +215,7 @@ public class CMJobService extends JobService {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         mBuilder.setContentIntent(resultPendingIntent);
+        mBuilder.setAutoCancel(true);
         NotificationManager mNotificationManager =
                 (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.

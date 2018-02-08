@@ -21,34 +21,31 @@ public class SmsReceiver extends BroadcastReceiver {
                 != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        // parseSms(context, intent);
+    }
+
+    void parseSms(Context context, Intent intent) {
         // Get the SMS message received
-//        final Bundle bundle = intent.getExtras();
-//        if (bundle != null) {
-//            // A PDU is a "protocol data unit". This is the industrial standard for SMS message
-//            final Object[] pdusObj = (Object[]) bundle.get("pdus");
-//            for (int i = 0; pdusObj != null && i < pdusObj.length; i++) {
-//                // This will create an SmsMessage object from the received pdu
-//
-//                SmsMessage sms = null;
-//
-////                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
-////                    sms = SmsMessage.createFromPdu((byte[]) pdusObj[i], "3gpp2");
-////                } else {
-////                    sms = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
-////                }
-//                sms = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
-//                // Get sender phone number
-//                String number = sms.getDisplayOriginatingAddress();
-//                String message = sms.getDisplayMessageBody();
-//                Toast.makeText(context, "sms : " + message, Toast.LENGTH_LONG).show();
-//
-////                if (message.contains("한전")) {
-////                    Intent sender = new Intent("kr.huah.maleum.sms");
-////                    sender.putExtra("number", number);
-////                    sender.putExtra("message", message);
-////                    LocalBroadcastManager.getInstance(context).sendBroadcast(sender);
-////                }
-//            }
-//        }
+        final Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            // A PDU is a "protocol data unit". This is the industrial standard for SMS message
+            final Object[] pdusObj = (Object[]) bundle.get("pdus");
+            for (int i = 0; pdusObj != null && i < pdusObj.length; i++) {
+                // This will create an SmsMessage object from the received pdu
+
+                SmsMessage sms = null;
+
+//                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
+//                    sms = SmsMessage.createFromPdu((byte[]) pdusObj[i], "3gpp2");
+//                } else {
+//                    sms = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
+//                }
+                sms = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
+                // Get sender phone number
+                String number = sms.getDisplayOriginatingAddress();
+                String message = sms.getDisplayMessageBody();
+                Toast.makeText(context, "sms : " + message, Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }
