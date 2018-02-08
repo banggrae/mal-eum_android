@@ -1,34 +1,19 @@
 package kr.huah.maleum;
 
-import java.text.MessageFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.messaging.FirebaseMessaging;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +26,10 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends Activity {
 
     BottomNavigationView mNavigation;
@@ -49,11 +38,11 @@ public class MainActivity extends Activity {
     private TextView mTextMessage;
     private boolean mSigned;
     private String mDeviceId;
-    // private String mDomain = "https://www.mal-eum.com/";
+    private String mDomain = "https://www.mal-eum.com/";
     // private String mDomain = "http://10.10.131.24:8090/";
     // private String mDomain = "http://192.168.0.8:8090/";
     // private String mDomain = "http://192.168.0.2:8090/";
-    private String mDomain = "http://10.10.121.53:8090/";
+    // private String mDomain = "http://10.10.121.53:8090/";
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -124,7 +113,6 @@ public class MainActivity extends Activity {
     }
 
     void requestReadMmsPermission() {
-
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.READ_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -144,56 +132,32 @@ public class MainActivity extends Activity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                 }
                 return;
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
 
     void saveDeviceId() {
-        if (TextUtils.isEmpty(getDeviceId())) {
-            mDeviceId = UUID.randomUUID().toString();
-            SharedPreferences pf = getPreferences();
-            SharedPreferences.Editor editor = pf.edit();
-            editor.putString("deviceId", mDeviceId);
-            editor.apply();
-        }
+        Preference.saveDeviceId(this);
     }
 
     String getDeviceId() {
-        SharedPreferences pf = getPreferences();
-        return pf.getString("deviceId", "");
+        return Preference.getDeviceId(this);
     }
 
     String getCmToken() {
-        SharedPreferences pf = getPreferences();
-        String token = pf.getString("messageToken", "");
-        if (TextUtils.isEmpty(token)) {
-            token = FirebaseInstanceId.getInstance().getToken();
-            SharedPreferences.Editor editor = pf.edit();
-            editor.putString("messageToken", token);
-            editor.apply();
-        }
-        // Toast.makeText(this, "token : " + token, Toast.LENGTH_SHORT).show();
-        return token;
+        return Preference.getCmToken(this);
     }
 
     int getWeatherAlarm() {
-        SharedPreferences pf = getPreferences();
-        return pf.getInt("weatherAlarm", 0);
+        return Preference.getWeatherAlarm(this);
     }
 
     void setWeatherAlarm(int time) {
-        SharedPreferences pf = getPreferences();
-        SharedPreferences.Editor editor = pf.edit();
-        editor.putInt("weatherAlarm", time);
-        editor.apply();
+        Preference.setWeatherAlarm(this, time);
 
         AlarmManager alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, WeatherAlarmReceiver.class);
@@ -228,15 +192,9 @@ public class MainActivity extends Activity {
     }
 
     void setAgreeSms(boolean agree) {
-        SharedPreferences pf = getPreferences();
-        SharedPreferences.Editor editor = pf.edit();
-        editor.putBoolean("agreeSms", agree);
-        editor.apply();
+        Preference.setAgreeSms(this, agree);
         if (agree) {
-            Toast.makeText(this, "한전 대금문자 활용 동의하셨습니다.", Toast.LENGTH_SHORT).show();
             requestReadMmsPermission();
-        } else {
-            Toast.makeText(this, "한전 대금문자 활용 거부하셨습니다.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -249,20 +207,11 @@ public class MainActivity extends Activity {
     }
 
     void setAgreeNotify(boolean agree) {
-        SharedPreferences pf = getPreferences();
-        SharedPreferences.Editor editor = pf.edit();
-        editor.putBoolean("agreeNotify", agree);
-        editor.apply();
-        if (agree) {
-            Toast.makeText(this, "알림 수신 동의하셨습니다.", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "알림 수신 거부하셨습니다.", Toast.LENGTH_SHORT).show();
-        }
+        Preference.setAgreeNotify(this, agree);
     }
 
     boolean agreedNotify() {
-        SharedPreferences pf = getPreferences();
-        return pf.getBoolean("agreeNotify", false);
+        return Preference.agreedNotify(this);
     }
 
     @Override
@@ -301,7 +250,6 @@ public class MainActivity extends Activity {
 
     public void setPlants(String id, String name) {
         // TODO
-
     }
 
     static class WebAppInterface {

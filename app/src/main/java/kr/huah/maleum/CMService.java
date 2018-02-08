@@ -41,15 +41,19 @@ public class CMService extends FirebaseMessagingService {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
 
         // Check if message contains a data payload.
-        if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
-            if (/* Check if data needs to be processed by long running job */ false) {
-                // For long-running tasks (10 seconds or more) use Firebase Job Dispatcher.
-                scheduleJob();
-            } else {
-                // Handle message within 10 seconds
-                handleNow();
-            }
+        //if (remoteMessage.getData().size() > 0) {
+        //    Log.d(TAG, "Message data payload: " + remoteMessage.getData());
+        //    if (/* Check if data needs to be processed by long running job */ false) {
+        //        // For long-running tasks (10 seconds or more) use Firebase Job Dispatcher.
+        //        scheduleJob();
+        //    } else {
+        //        // Handle message within 10 seconds
+        //        handleNow();
+        //    }
+        //}
+
+        if(Preference.agreedNotify(this) == false) {
+            return;
         }
 
         // Check if message contains a notification payload.
@@ -94,22 +98,23 @@ public class CMService extends FirebaseMessagingService {
             return;
         }
         String message = messageBody;
+        String title = "날씨맑음 알림";
         Intent intent = new Intent(this, MainActivity.class);
-        if (messageBody.contains(":")) {
-            String type = messageBody.substring(0, messageBody.indexOf(":"));
+        String[] token = message.split("\\|");
+        if (token.length >= 3) {
+            title = token[1];
+            message = token[2];
+            String type = token[0];
             intent.putExtra("gcm", type);
-            message = messageBody.substring(messageBody.indexOf(":") + 1);
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
-        // String channelId = getTrimmedString(R.string.default_notification_channel_id);
-        //Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, NotificationChannel.DEFAULT_CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_stat_sun)
-                        .setContentTitle("날씨맑음 알림")
+                        .setContentTitle(title)
                         .setContentText(message)
                         .setAutoCancel(true)
                         //.setSound(defaultSoundUri)

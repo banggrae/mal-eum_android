@@ -21,23 +21,6 @@ public class CMInstanceIDService extends FirebaseInstanceIdService {
         // If you want to send messages to this application instance or
         // manage this apps subscriptions on the server side, send the
         // Instance ID token to your app server.
-
-        // TODO sendRegistrationToServer(refreshedToken);
-        saveToken(refreshedToken);
-        updateToken(refreshedToken);
-    }
-
-    void updateToken(String token) {
-        SharedPreferences pf = getSharedPreferences(getPackageName(), MODE_PRIVATE);
-        if (pf.getBoolean("agreeNotify", false)) {
-            // TODO update token on Server
-        }
-    }
-
-    void saveToken(String token) {
-        SharedPreferences pf = getSharedPreferences(getPackageName(), MODE_PRIVATE);
-        SharedPreferences.Editor editor = pf.edit();
-        editor.putString("messageToken", token);
-        editor.apply();
+        Preference.saveToken(this, refreshedToken);
     }
 }

@@ -17,6 +17,7 @@ public class WeatherAlarmReceiver extends BroadcastReceiver {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context, NotificationChannel.DEFAULT_CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_stat_sun)
+                        .setAutoCancel(true)
                         .setContentTitle("날씨맑음 오늘의 날씨")
                         .setContentText("여기를 꾹 눌러 발전소 오늘 날씨를 확인해 보세요.");
         // Creates an explicit intent for an Activity in your app
@@ -37,7 +38,6 @@ public class WeatherAlarmReceiver extends BroadcastReceiver {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         mBuilder.setContentIntent(resultPendingIntent);
-        mBuilder.setAutoCancel(true);
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
